@@ -1,0 +1,21 @@
+- The command 'npx prisma migrate dev --name init' d returns an error, if the db is not running as
+  specified in the schema.prisma
+- In the docker compose file I have used the notation '- var=value' instead of 'var:value'.
+  What is the recommended way? I have never seen the second style.
+- Commands in order
+    - npx prisma init 
+    - docker compose up -dd (starts postgres db)
+    - npx prisma migrate dev --name init
+    - npx prisma generate (generate client)
+    - npx prisma studio
+
+- Accessing db in the docker container
+   -> docker exec -it my-postgres-container bash
+      - docker exec: runs a command inside a running container 
+      - it: starts an interactive terminal (i for interactive, t for tty)
+      - my-postgres-container: name of your running PostGreSQL container
+      - bash: open a shell session inside the container 
+   -> psql -U myuser -d mydatabase
+     - psql: starts the PostGreSQL interactive shell 
+     - -U myuser: logs in as PostGreSQL user (myuser)
+     - -d mydatabase: connects to the database (mydatabase)
