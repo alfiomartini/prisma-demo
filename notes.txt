@@ -19,3 +19,108 @@
      - psql: starts the PostGreSQL interactive shell 
      - -U myuser: logs in as PostGreSQL user (myuser)
      - -d mydatabase: connects to the database (mydatabase)
+
+- ps useful Commands
+   - ps -ef --forest | grep npm
+
+- to test SIGINT: ctrl + C 
+- to test SIGTERM: kill -SIGTERM <pid>
+
+- Docker communication 
+  1-No, the communication is not bidirectional in the sense of port mapping. The port mapping specified 
+  in the compose.yml file (`"5432:5432"`) allows traffic from the host machine to be forwarded to the container. 
+  Specifically:
+     - **Host to Container**: When you connect to `localhost:5432` on your host machine, the traffic is 
+     forwarded to port `5432` inside the PostgreSQL container. This allows applications running on your 
+     host machine to communicate with the PostgreSQL service inside the container.
+     However, this does not automatically allow the container to initiate connections to the host machine on 
+     the same port. For the container to communicate with services on the host machine, 
+     you would typically use the host's network interface directly, but this is not related to the 
+     port mapping specified in the compose.yml file.
+
+    In summary, the port mapping primarily facilitates communication from the host to the container.
+  2- When you run a Docker Compose file without explicitly defining a network, Docker Compose automatically
+  creates a default network for the services defined in the file. This default network is typically a bridge 
+  network, which allows the containers to communicate with each other.
+
+Here’s how the default network works and its role:
+
+1. **Isolation**: The default network isolates the containers from the host machine and other containers 
+not part of the same Docker Compose project. This ensures that the services defined in your compose.yml 
+file can communicate with each other securely and without interference from other containers.
+
+2. **Internal DNS**: Docker Compose sets up an internal DNS service within the network. This allows 
+containers to communicate with each other using the service names defined in the compose.yml file. 
+For example, in your case, the `postgres` service can be accessed by other containers in the same network 
+using the hostname `postgres`.
+
+3. **Automatic Network Creation**: When you run `docker-compose up`, Docker Compose automatically creates a 
+network with a name derived from the project name (usually the directory name) and a suffix `_default`. 
+For example, if your project directory is named `prisma-app`, the network might be named 
+`prisma-app_default`.
+
+4. **Service Communication**: Within this network, containers can communicate with each other using their 
+service names. For example, if you had another service in your compose.yml file that needed to connect to 
+the PostgreSQL database, it could use the hostname `postgres` instead of `localhost`.
+
+In your .env file, the `DATABASE_URL` is set to `postgresql://admin:admin@localhost:5432/prisma_demo`. 
+This works because the `localhost` in this context refers to the host machine where the Docker Compose is 
+running. If you were to connect from another container, you would use the service name `postgres` instead 
+of `localhost`.
+
+Here’s an example of how you might connect to the PostgreSQL service from another service in the same 
+Docker Compose file:
+
+```properties
+DATABASE_URL="postgresql://admin:admin@postgres:5432/prisma_demo"
+```
+
+This ensures that the connection string uses the internal DNS provided by Docker Compose to resolve the 
+`postgres` service name to the correct container IP address within the default network.
+
+- Volume(s):
+
+  1- Commands:
+    - sudo ls -l /var/lib/docker/volumes/prisma-app_pgdata/_data 
+    - docker volume ls 
+    - docker volume inspect prisma-app_pgdata
+    - docker volume ls -q | grep -v "prisma-app_pgdata" | xargs docker volume rm
+  
+  2- Interpretation;
+  
+    In the compose.yml file, the volume mapping `pgdata:/var/lib/postgresql/data` means that any data 
+    written to `/var/lib/postgresql/data` inside the container will be stored in the Docker volume named `pgdata`. 
+    This volume acts like a mounted device inside the container's file system, providing persistent storage that 
+    is independent of the container's lifecycle.
+
+    ### What is a Docker Volume Under the Hood?
+
+    Under the hood, a Docker volume is a directory or storage location managed by Docker on the host machine. 
+    Here are some key points about Docker volumes:
+
+    1. **Storage Location**: On a Linux host, Docker volumes are typically stored in the `/var/lib/docker/volumes/` 
+    directory. Each volume has its own subdirectory within this location.
+
+    2. **Persistence**: Docker volumes provide persistent storage, meaning that the data stored in a volume remains 
+    intact even if the container using it is stopped or removed. This is useful for databases and other applications 
+    that need to retain data across container restarts.
+
+    3. **Isolation**: Volumes are isolated from the container's file system, which means that changes to the container's 
+    file system do not affect the volume and vice versa. This isolation helps to ensure data integrity and security.
+
+    4. **Sharing Data**: Volumes can be shared between multiple containers. This allows different containers to 
+     read from and write to the same data storage, facilitating data sharing and collaboration between services.
+
+    5. **Performance**: Volumes are optimized for performance and are generally faster than bind mounts 
+    (which map host directories to container directories). This makes them suitable for high-performance 
+    applications.
+
+
+    Docker volumes provide a robust and efficient way to manage persistent storage for your containers. 
+    By using volumes, you can ensure that your data is safely stored and accessible across container restarts 
+    and even across different containers. This makes them an essential tool for managing stateful applications 
+    like databases.
+
+
+    - Prisma page for crud operations:
+       https://www.prisma.io/docs/orm/prisma-client/queries/crud#read
