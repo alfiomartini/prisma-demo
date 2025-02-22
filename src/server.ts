@@ -5,6 +5,7 @@ import {
   getUserById,
   createUser,
   deleteUserById,
+  updateUserById,
 } from "./controllers";
 import dotenv from "dotenv";
 
@@ -23,6 +24,7 @@ app.get("/users", fetchAllUsers);
 app.get("/users/:id", getUserById);
 app.post("/users", createUser);
 app.delete("/users/:id", deleteUserById);
+app.patch("/users/:id", updateUserById);
 app.all("*", (req, resp) => {
   resp.send("You have tried to reach a route that does not exist");
 });

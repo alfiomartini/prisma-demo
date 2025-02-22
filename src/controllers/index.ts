@@ -27,6 +27,32 @@ export const deleteUserById = async (req: Request, resp: Response) => {
   }
 };
 
+export const updateUserById = async (req: Request, resp: Response) => {
+  try {
+    const { id } = req.params;
+    const { email, name }: IUser = req.body;
+    if (!email && !name) {
+      resp.status(422).json({ error: "needed email or name or both" });
+    } else {
+      const newUser = {} as IUser;
+      if (email) newUser.email = email;
+      if (name) newUser.name = name;
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          ...newUser,
+        },
+      });
+      resp.json(updatedUser);
+    }
+  } catch (error) {
+    console.log("updateById error", error);
+    resp.status(500).json({ error: "Failed to update user" });
+  }
+};
+
 export const getUserById = async (req: Request, resp: Response) => {
   try {
     const { id } = req.params;
