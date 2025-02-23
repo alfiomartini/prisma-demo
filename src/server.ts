@@ -1,12 +1,7 @@
 import express, { Request, Response } from "express";
 import { prisma } from "./dbclient";
-import {
-  fetchAllUsers,
-  getUserById,
-  createUser,
-  deleteUserById,
-  updateUserById,
-} from "./controllers";
+import { PrismaUserRepository } from "./repositories/UserRepository";
+import { UserController } from "./controllers/UserController";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -16,16 +11,19 @@ const PORT = process.env.PORT ?? 3000;
 
 app.use(express.json());
 
-app.get("/", (req: Request, resp: Response) => {
+const userRepository = new PrismaUserRepository(prisma);
+const userController = new UserController(userRepository);
+
+app.get("/", (_req: Request, resp: Response) => {
   resp.send("Wellcome to prisma demo API");
 });
 
-app.get("/users", fetchAllUsers);
-app.get("/users/:id", getUserById);
-app.post("/users", createUser);
-app.delete("/users/:id", deleteUserById);
-app.patch("/users/:id", updateUserById);
-app.all("*", (req, resp) => {
+app.get("/users", userController.fetchAllUsers);
+app.get("/users/:id", userController.getUserById);
+app.post("/users", userController.createUser);
+app.delete("/users/:id", userController.deleteUserById);
+app.patch("/users/:id", userController.updateUserById);
+app.all("*", (_req, resp) => {
   resp.send("You have tried to reach a route that does not exist");
 });
 
